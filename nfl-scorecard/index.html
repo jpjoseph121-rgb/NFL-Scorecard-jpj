@@ -285,6 +285,24 @@
   .lb-row{cursor:pointer}
   .modal .tlogo{width:22px;height:22px}
 
+  /* ---------- HOW TO PLAY ---------- */
+  .howto-btn{margin-top:11px;background:rgba(201,162,75,.12);border:1px solid var(--gold);color:var(--gold);
+    border-radius:20px;font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;
+    padding:7px 16px;cursor:pointer;font-family:inherit;position:relative}
+  .howto-btn:active{background:rgba(201,162,75,.28)}
+  .modal.howto{max-height:88vh}
+  .modal.howto p{font-size:13px;line-height:1.55;color:var(--chalk2);margin:0 0 10px}
+  .modal.howto .how-lead{font-size:15px;font-weight:800;color:#fff;line-height:1.35}
+  .modal.howto h4{font-size:11.5px;color:var(--red2);letter-spacing:.1em;text-transform:uppercase;margin:14px 0 6px}
+  .how-score{background:var(--field2);border:1px solid var(--line);border-radius:10px;padding:6px 10px;margin-bottom:10px}
+  .how-score div{display:flex;align-items:center;gap:12px;padding:7px 0;font-size:13px;color:var(--chalk)}
+  .how-score div+div{border-top:1px solid var(--dim2)}
+  .how-score .pts-badge{min-width:44px;text-align:center;font-size:13px}
+  .modal.howto .how-note{font-size:12px;color:var(--slate)}
+  .how-wa{width:100%;margin-top:6px;background:#25d366;color:#053b1c;border:none;border-radius:9px;padding:12px;
+    font-size:14px;font-weight:800;cursor:pointer;font-family:inherit}
+  .how-wa:active{background:#1fb956}
+
 </style>
 </head>
 <body>
@@ -295,6 +313,7 @@
   <div class="header-year">2 0 2 6</div>
   <div class="header-sub">SEP 9 – JAN 10 &nbsp;·&nbsp; 32 TEAMS &nbsp;·&nbsp; 272 GAMES + POSTSEASON</div>
   <div class="seam"></div>
+  <button class="howto-btn" id="howBtn" type="button">❓ How to play</button>
   <div class="header-name-row">
     <span class="header-name-label">🏈 Scorecard for:</span>
     <input id="cardName" type="text" placeholder="Your name" maxlength="24" autocomplete="off">
@@ -394,6 +413,26 @@
     <div class="msub" id="picksSub"></div>
     <div id="picksBody"></div>
     <button class="modal-close" id="closePicks">Close</button>
+  </div>
+</div>
+
+<div class="modal-bg" id="howModal" role="dialog" aria-modal="true" aria-labelledby="howTitle">
+  <div class="modal howto">
+    <h3 id="howTitle">🏈 How to play</h3>
+    <div class="msub">NFL 2026 Pick'em · free · no sign-up</div>
+    <p class="how-lead">Think you know football better than your friends? Prove it.</p>
+    <p>Before kickoff, call the final score for both teams. Once the game starts, your pick locks and sits beside the real result — no changing your mind, and no bragging without receipts. Points are calculated automatically from official scores, and a live leaderboard keeps the whole group honest.</p>
+    <h4>Play with friends in a minute</h4>
+    <p>Open the <b>League</b> tab, enter your name and join with the group's invite code. Share the code with up to 25 friends, family, colleagues or fellow fans and everyone lands on the same board. Follow your favorite team's full season in <b>My Team</b>, browse games day by day, check the standings, and turn on a reminder that nudges you 30 minutes before a game locks. Add it to your Home Screen and it works like any other app.</p>
+    <h4>Scoring — every pick can pay off</h4>
+    <div class="how-score">
+      <div><span class="pts-badge p5">+5</span><span>Exact final score</span></div>
+      <div><span class="pts-badge p3">+3</span><span>Both teams within 5 points of the final</span></div>
+      <div><span class="pts-badge p1">+1</span><span>Right winner</span></div>
+    </div>
+    <p class="how-note">Only your best result on a game counts, so a bold call is always worth it. The leaderboard also tracks exact scores — the real bragging right. Tap any player to see their picks next to the finals once games have kicked off.</p>
+    <button class="how-wa" id="howWa" type="button">Invite friends on WhatsApp</button>
+    <button class="modal-close" id="howClose" type="button">Got it — let's play</button>
   </div>
 </div>
 
@@ -978,6 +1017,24 @@ document.getElementById("statPredWrap").onclick=openPicks;
 document.getElementById("statPctWrap").onclick=openPicks;
 document.getElementById("closePicks").onclick=function(){ document.getElementById("picksModal").classList.remove("show"); };
 document.getElementById("picksModal").onclick=function(e){ if(e.target.id==="picksModal") e.target.classList.remove("show"); };
+
+/* ---------- HOW TO PLAY + WhatsApp invite ---------- */
+function waText(){
+  var url=location.href.split("#")[0].split("?")[0];
+  return "🏈 *NFL 2026 Pick'em — play with friends!*\n"+
+    "Call the final score of every game before kickoff. Picks lock at game time, official scores decide, and a live leaderboard shows who really knows football.\n\n"+
+    "*+5* exact score · *+3* both teams within 5 · *+1* right winner\n\n"+
+    "Free, no sign-up. Join with code *"+LEAGUE_CODE+"*:\n"+url;
+}
+function openHow(){ document.getElementById("howModal").classList.add("show"); }
+function closeHow(){ document.getElementById("howModal").classList.remove("show"); }
+document.getElementById("howBtn").onclick=openHow;
+document.getElementById("howClose").onclick=closeHow;
+document.getElementById("howModal").onclick=function(e){ if(e.target.id==="howModal") closeHow(); };
+document.addEventListener("keydown",function(e){ if(e.key==="Escape"){ closeHow(); document.getElementById("picksModal").classList.remove("show"); } });
+document.getElementById("howWa").onclick=function(){
+  window.open("https://wa.me/?text="+encodeURIComponent(waText()),"_blank","noopener");
+};
 
 /* ---------- name field ---------- */
 var nameInput=document.getElementById("cardName");
