@@ -1,0 +1,10 @@
+{
+  "name": "nfl-scorecard-2026",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "NFL 2026 pick'em scorecard — static PWA + Netlify Functions",
+  "dependencies": {
+    "@netlify/blobs": "^8.2.0"
+  }
+}

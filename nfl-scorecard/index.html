@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0b132b">
+<title>NFL 2026 – My Scorecard</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.png">
+<meta name="apple-mobile-web-app-title" content="NFL Scorecard">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+  :root{
+    --field:#0b132b; --field2:#131e3f; --field3:#1a2850; --line:#263257;
+    --red:#d50a0a; --red2:#ff4d4d; --chalk:#f2f4f8; --chalk2:#b9c2da;
+    --slate:#8b96b8; --dim:#56628a; --dim2:#2f3a5e;
+    --grass:#2fa866; --grass2:#6fdc9f; --turf:#4c7a3a; --turf2:#86b56f; --gold:#c9a24b;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  body{background:var(--field);color:var(--chalk);
+    font-family:"Barlow","Helvetica Neue",Arial,sans-serif;min-height:100vh;overflow-x:hidden}
+
+  /* ---------- HEADER ---------- */
+  .header{background:linear-gradient(160deg,#111d3f 0%,#0b132b 60%,#0a1124 100%);
+    border-bottom:3px solid var(--red);padding:16px 16px 13px;text-align:center;position:relative;overflow:hidden}
+  .header::before{content:"";position:absolute;inset:0;
+    background:radial-gradient(ellipse at 30% 0%,rgba(213,10,10,.14) 0%,transparent 62%),
+               radial-gradient(ellipse at 72% 0%,rgba(255,255,255,.06) 0%,transparent 62%);pointer-events:none}
+  .header-eyebrow{font-size:10px;letter-spacing:.16em;color:var(--red2);text-transform:uppercase;margin-bottom:3px;font-weight:700}
+  .header-title{font-size:33px;font-weight:800;color:#fff;letter-spacing:.06em;line-height:1;text-transform:uppercase}
+  .header-title .ball{color:var(--red)}
+  .header-year{font-size:15px;font-weight:800;color:var(--gold);letter-spacing:.5em;margin-top:3px}
+  .header-sub{font-size:10.5px;color:var(--slate);letter-spacing:.05em;margin-top:6px}
+  .seam{height:8px;margin:10px auto 0;max-width:240px;opacity:.9;
+    background:repeating-linear-gradient(90deg,var(--turf) 0 2px,transparent 2px 12px) 0 0/100% 100% no-repeat,
+               linear-gradient(var(--turf),var(--turf)) 0 3px/100% 2px no-repeat}
+  .header-name-row{margin-top:11px;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}
+  .header-name-label{font-size:11px;color:var(--red2);letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;font-weight:700}
+  #cardName{background:rgba(255,255,255,.07);border:1px solid var(--red);border-radius:4px;
+    color:#fff;font-size:16px;font-weight:600;padding:5px 10px;width:172px;outline:none}
+  #cardName::placeholder{color:var(--dim)}
+
+  /* ---------- TABS ---------- */
+  .tabs{display:flex;background:var(--field3);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:50}
+  .tab{flex:1;padding:12px 6px 10px;text-align:center;cursor:pointer;border-bottom:3px solid transparent;
+    color:var(--slate);font-size:13px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;
+    transition:all .18s;white-space:nowrap;background:none;border-top:none;border-left:none;border-right:none;font-family:inherit}
+  .tab small{display:block;font-size:9.5px;font-weight:500;opacity:.7;margin-top:1px}
+  .tab.active{color:#fff;border-bottom-color:var(--red);background:rgba(213,10,10,.07)}
+
+  .predict-banner{background:rgba(47,168,102,.10);border-top:1px solid rgba(47,168,102,.32);
+    border-bottom:1px solid rgba(47,168,102,.32);padding:7px 14px;text-align:center;font-size:11px;
+    color:var(--grass2);letter-spacing:.01em}
+
+  /* ---------- LIVE PILL ---------- */
+  .live-pill{display:flex;align-items:center;justify-content:center;gap:7px;margin:10px 10px 2px;
+    padding:7px 10px;border-radius:8px;font-size:11px;font-weight:700}
+  .live-pill .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+  .live-pill.ok{background:rgba(47,168,102,.10);border:1px solid rgba(47,168,102,.4);color:var(--grass2)}
+  .live-pill.ok .dot{background:var(--grass);animation:lpulse 2s infinite}
+  .live-pill.off{background:rgba(201,162,75,.08);border:1px solid rgba(201,162,75,.35);color:#f4d488}
+  .live-pill.off .dot{background:var(--gold)}
+  .live-pill.loading{background:var(--field2);border:1px solid var(--line);color:var(--slate)}
+  .live-pill.loading .dot{background:var(--slate);animation:lpulse 1s infinite}
+  @keyframes lpulse{0%{opacity:1}50%{opacity:.35}100%{opacity:1}}
+
+  /* ---------- DATE NAV ---------- */
+  .datenav{display:flex;align-items:center;gap:8px;padding:12px 10px 4px}
+  .datenav button.nav{background:var(--field3);border:1px solid var(--line);color:var(--chalk);
+    width:40px;height:40px;border-radius:8px;font-size:20px;font-weight:800;cursor:pointer;flex-shrink:0}
+  .datenav button.nav:active{background:var(--field2)}
+  .datenav .datemid{flex:1;text-align:center}
+  .datenav .dlabel{font-size:16px;font-weight:800;color:#fff;letter-spacing:.02em}
+  .datenav .dsub{font-size:10.5px;color:var(--slate);margin-top:1px}
+  .datenav input[type=date]{background:var(--field2);border:1px solid var(--line);color:var(--chalk);
+    border-radius:7px;padding:4px 6px;font-size:12px;font-family:inherit;margin-top:5px;outline:none}
+  .today-btn{background:var(--red);color:#fff;border:none;border-radius:7px;font-size:11px;font-weight:800;
+    letter-spacing:.05em;text-transform:uppercase;padding:5px 11px;cursor:pointer;margin-top:5px}
+
+  /* ---------- TEAM PICKER ---------- */
+  .teampick{display:flex;align-items:center;gap:9px;padding:12px 10px 4px}
+  .teampick img{width:34px;height:34px;flex-shrink:0}
+  .teampick select{flex:1;background:var(--field2);border:1px solid var(--line);color:#fff;
+    border-radius:8px;padding:9px 10px;font-size:15px;font-weight:700;font-family:inherit;outline:none}
+
+  .panel{padding:6px 10px 96px;display:none}
+  .panel.active{display:block}
+
+  /* ---------- DAY GROUP ---------- */
+  .day-section{margin-bottom:16px}
+  .day-header{display:flex;align-items:center;gap:10px;margin:12px 2px 8px}
+  .day-label{background:var(--chalk);color:var(--field);font-size:11.5px;font-weight:800;letter-spacing:.06em;
+    text-transform:uppercase;padding:3px 10px;border-radius:3px;white-space:nowrap}
+  .day-line{flex:1;height:1px;background:linear-gradient(to right,rgba(244,241,233,.35),transparent)}
+
+  /* ---------- GAME CARD ---------- */
+  .game{background:var(--field2);border-radius:8px;border-left:4px solid var(--line);
+    margin-bottom:9px;overflow:hidden;position:relative}
+  .game.final{border-left-color:var(--grass)}
+  .game.live{border-left-color:var(--red)}
+  .game-top{display:flex;align-items:center;padding:8px 11px 5px;gap:8px}
+  .g-time{font-size:12.5px;font-weight:700;color:var(--gold);white-space:nowrap}
+  .g-status{font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
+  .g-status.pre{background:rgba(139,150,184,.14);color:var(--chalk2)}
+  .g-status.live{background:var(--red);color:#fff;display:flex;align-items:center;gap:5px}
+  .g-status.live .ld{width:7px;height:7px;border-radius:50%;background:#fff;animation:lpulse 1.2s infinite}
+  .g-status.final{background:rgba(47,168,102,.16);color:var(--grass2)}
+  .g-tv{margin-left:auto;font-size:10px;color:var(--slate);text-align:right;white-space:nowrap;line-height:1.2}
+  .g-tv strong{color:#fff}
+
+  .trow{display:flex;align-items:center;padding:5px 11px;gap:9px}
+  .trow+.trow{padding-top:2px}
+  .tlogo{width:30px;height:30px;flex-shrink:0;object-fit:contain}
+  .tinfo{flex:1;min-width:0}
+  .tname{font-size:15px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.15}
+  .trec{font-size:10px;color:var(--slate);margin-top:1px}
+  .tright{flex-shrink:0;display:flex;align-items:center;gap:8px}
+  .win .tname{color:var(--grass2)}
+
+  /* run inputs (predict mode) */
+  .run-in{width:44px;height:40px;background:var(--field3);border:1.5px solid var(--dim);border-radius:7px;
+    color:#fff;font-size:18px;font-weight:800;text-align:center;outline:none;-webkit-appearance:none;appearance:none;
+    font-family:'Hanken Grotesk',inherit}
+  .run-in::-webkit-outer-spin-button,.run-in::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  .run-in:focus{border-color:var(--gold);background:rgba(201,162,75,.12)}
+
+  /* official run + pick chip (locked/final) */
+  .run-off{font-size:24px;font-weight:800;color:var(--chalk);min-width:26px;text-align:center;font-family:'Hanken Grotesk',inherit}
+  .run-off.win{color:var(--grass2)}
+  .pick-chip{font-size:9px;font-weight:700;color:var(--slate);white-space:nowrap;min-width:44px;text-align:center}
+  .pick-chip b{color:#9fc0f2}
+
+  .g-venue{padding:2px 11px 8px;font-size:10.5px;color:var(--slate)}
+  .g-city{color:var(--turf2);font-weight:600}
+  .g-inning{padding:0 11px 6px;font-size:11px;font-weight:700;color:var(--red2)}
+
+  .pts-strip{display:flex;justify-content:center;padding:0 11px 9px}
+  .pts-badge{font-size:10px;font-weight:800;letter-spacing:.03em;padding:3px 11px;border-radius:20px}
+  .pts-badge.p5{background:rgba(47,168,102,.22);color:var(--grass2)}
+  .pts-badge.p3{background:rgba(201,162,75,.20);color:#e8c878}
+  .pts-badge.p1{background:rgba(90,150,230,.18);color:#9fc0f2}
+  .pts-badge.p0{background:rgba(255,255,255,.05);color:var(--slate)}
+
+  .hl-link{display:flex;align-items:center;gap:8px;margin:0 11px 10px;padding:8px 11px;
+    background:linear-gradient(135deg,rgba(201,162,75,.13),rgba(201,162,75,.04));
+    border:1px solid rgba(201,162,75,.4);border-radius:6px;text-decoration:none;transition:.15s}
+  .hl-link:active{background:rgba(201,162,75,.26)}
+  .hl-icon{display:inline-flex;align-items:center;justify-content:center;width:21px;height:21px;flex-shrink:0;
+    background:#cc1f1f;color:#fff;border-radius:50%;font-size:9px;padding-left:2px}
+  .hl-text{color:var(--gold);font-size:12.5px;font-weight:700}
+  .hl-note{margin-left:auto;color:var(--slate);font-size:9px;text-transform:uppercase;letter-spacing:.07em}
+  .hl-link.upcoming .hl-text{color:var(--slate)}
+  .hl-link.upcoming .hl-icon{background:#555f70}
+
+  .empty{text-align:center;color:var(--dim);font-size:14px;padding:48px 24px;line-height:1.7}
+  .empty b{color:var(--slate)}
+  .skl{height:96px;background:linear-gradient(90deg,var(--field2) 25%,#1c2c5a 50%,var(--field2) 75%);
+    background-size:300% 100%;animation:shim 1.4s infinite;border-radius:8px;margin-bottom:9px}
+  @keyframes shim{0%{background-position:150% 0}100%{background-position:-150% 0}}
+
+  /* ---------- STANDINGS ---------- */
+  .div-block{margin-bottom:18px}
+  .div-head{font-size:12px;color:var(--red2);letter-spacing:.1em;text-transform:uppercase;font-weight:800;
+    margin:8px 2px 8px;display:flex;align-items:center;gap:10px}
+  .div-head::after{content:'';flex:1;height:1px;background:linear-gradient(to right,rgba(213,10,10,.4),transparent)}
+  .stand-row{display:flex;align-items:center;gap:9px;padding:7px 10px;background:var(--field2);
+    border-radius:7px;margin-bottom:5px}
+  .stand-row.lead{border-left:3px solid var(--gold)}
+  .stand-row img{width:24px;height:24px;flex-shrink:0}
+  .stand-name{flex:1;font-size:14px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .stand-wl{font-size:13px;font-weight:800;color:var(--chalk);min-width:64px;text-align:right;font-family:'Hanken Grotesk',inherit}
+  .stand-gb{font-size:11px;color:var(--slate);min-width:38px;text-align:right}
+  .stand-hd{display:flex;gap:9px;padding:0 10px 4px;font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em}
+  .stand-hd .a{flex:1}.stand-hd .b{min-width:64px;text-align:right}.stand-hd .c{min-width:38px;text-align:right}
+
+  /* ---------- LEAGUE ---------- */
+  .lg-card{background:var(--field2);border:1px solid var(--line);border-radius:10px;padding:13px;margin:10px 2px 6px}
+  .lg-code-row{display:flex;align-items:center;gap:10px}
+  .lg-code-lbl{font-size:9.5px;color:var(--slate);letter-spacing:.09em;text-transform:uppercase}
+  .lg-code{font-size:24px;font-weight:800;color:var(--gold);letter-spacing:.14em;font-family:'Hanken Grotesk',inherit;margin-top:2px}
+  .lg-copy{margin-left:auto;background:var(--red);color:#fff;border:none;border-radius:8px;
+    font-size:12px;font-weight:800;letter-spacing:.03em;padding:9px 13px;cursor:pointer;white-space:nowrap;font-family:inherit}
+  .lg-copy:active{background:var(--red2)}
+  .lg-join{margin-top:12px;padding-top:12px;border-top:1px solid var(--dim2)}
+  .lg-join-lbl{font-size:11.5px;color:var(--grass2);margin-bottom:7px}
+  .lg-join-row{display:flex;gap:8px}
+  .lg-join-row input{flex:1;background:var(--field3);border:1px solid var(--line);color:#fff;
+    border-radius:8px;padding:9px 11px;font-size:15px;font-weight:600;font-family:inherit;outline:none}
+  .lg-join-row input:focus{border-color:var(--gold)}
+  .lg-join-row button{background:var(--grass);color:#fff;border:none;border-radius:8px;
+    font-size:14px;font-weight:800;padding:0 18px;cursor:pointer;font-family:inherit}
+  .lg-me{margin-top:11px;font-size:13px;color:var(--chalk2);display:none;align-items:center;gap:8px;flex-wrap:wrap}
+  .lg-me.show{display:flex}
+  .lg-me .rank-badge{background:var(--gold);color:var(--field);font-weight:800;font-size:12px;
+    border-radius:20px;padding:3px 11px;letter-spacing:.02em}
+  .lg-me .edit-name{margin-left:auto;background:none;border:1px solid var(--line);color:var(--slate);
+    border-radius:7px;font-size:11px;padding:5px 10px;cursor:pointer;font-family:inherit}
+  .lg-board-head{display:flex;align-items:center;gap:10px;margin:14px 2px 8px}
+  .lg-sync{font-size:9.5px;color:var(--slate);white-space:nowrap}
+  .lb-row{display:flex;align-items:center;gap:10px;padding:9px 11px;background:var(--field2);
+    border-radius:8px;margin-bottom:5px;border-left:3px solid transparent}
+  .lb-row.you{border-left-color:var(--gold);background:rgba(201,162,75,.07)}
+  .lb-rank{font-size:15px;font-weight:800;color:var(--slate);min-width:26px;text-align:center;font-family:'Hanken Grotesk',inherit}
+  .lb-row.top1 .lb-rank{color:var(--gold)}.lb-row.top2 .lb-rank{color:#c4ced4}.lb-row.top3 .lb-rank{color:var(--turf2)}
+  .lb-name{flex:1;font-size:15px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .lb-name .you-tag{font-size:9px;font-weight:800;color:var(--field);background:var(--gold);
+    border-radius:10px;padding:1px 7px;margin-left:6px;letter-spacing:.04em;vertical-align:middle}
+  .lb-sub{font-size:10px;color:var(--slate);margin-top:1px;font-weight:500}
+  .lb-pts{font-size:19px;font-weight:800;color:var(--grass2);min-width:38px;text-align:right;font-family:'Hanken Grotesk',inherit}
+  .lb-pts small{display:block;font-size:8.5px;color:var(--slate);font-weight:600;letter-spacing:.05em;text-transform:uppercase}
+
+  /* ---------- LOCK REMINDER ---------- */
+  .lock-banner{display:none;align-items:center;gap:9px;margin:10px 10px 0;padding:9px 11px;
+    background:linear-gradient(135deg,rgba(201,162,75,.16),rgba(201,162,75,.05));
+    border:1px solid rgba(201,162,75,.45);border-radius:9px}
+  .lock-banner.show{display:flex}
+  .lock-banner .lb-ico{font-size:16px;flex-shrink:0}
+  .lock-banner .lb-txt{flex:1;font-size:11.5px;color:#f4d488;line-height:1.35}
+  .lock-banner .lb-txt b{color:#fff}
+  .lock-banner .lb-go{background:var(--gold);color:var(--field);border:none;border-radius:7px;
+    font-size:11px;font-weight:800;padding:7px 11px;cursor:pointer;white-space:nowrap;font-family:inherit}
+  .rem-row{display:flex;align-items:center;gap:9px;margin-top:12px;padding-top:12px;border-top:1px solid var(--dim2)}
+  .rem-row .rr-txt{flex:1;font-size:11.5px;color:var(--chalk2);line-height:1.35}
+  .rem-row .rr-txt small{display:block;color:var(--slate);font-size:10px;margin-top:2px}
+  .rem-btn{background:var(--field3);border:1px solid var(--gold);color:var(--gold);border-radius:8px;
+    font-size:11.5px;font-weight:800;padding:8px 12px;cursor:pointer;white-space:nowrap;font-family:inherit}
+  .rem-btn.on{background:rgba(47,168,102,.16);border-color:var(--grass);color:var(--grass2)}
+  .cap-chip{font-size:9.5px;font-weight:800;color:var(--slate);letter-spacing:.06em;text-transform:uppercase;
+    background:var(--field3);border:1px solid var(--line);border-radius:20px;padding:3px 9px;white-space:nowrap}
+  .pick-rejected{color:var(--red2)!important}
+  .verified{display:inline-flex;align-items:center;gap:4px;font-size:9px;color:var(--grass2);
+    letter-spacing:.05em;text-transform:uppercase;font-weight:800}
+
+  /* ---------- STATS BAR ---------- */
+  .stats-bar{position:fixed;bottom:0;left:0;right:0;background:var(--field3);border-top:1px solid var(--red);
+    padding:9px 12px;display:flex;justify-content:space-around;align-items:center;z-index:100}
+  .stat{text-align:center;cursor:pointer}
+  .stat-val{font-size:19px;font-weight:800;color:var(--gold);line-height:1;font-family:'Hanken Grotesk',inherit}
+  .stat-val.pts{color:var(--grass2)}
+  .stat-lbl{font-size:8.5px;color:var(--slate);letter-spacing:.06em;text-transform:uppercase;margin-top:2px}
+  .refresh-btn{background:var(--red);color:#fff;border:none;border-radius:6px;font-size:16px;
+    width:38px;height:34px;cursor:pointer}
+  .refresh-btn:active{background:var(--red2)}
+
+  .toast{position:fixed;top:18px;left:50%;transform:translateX(-50%) translateY(-90px);background:var(--grass);
+    color:#fff;font-size:13px;font-weight:700;padding:10px 20px;border-radius:30px;transition:transform .35s;z-index:200;white-space:nowrap}
+  .toast.show{transform:translateX(-50%) translateY(0)}
+
+  /* ---------- PICKS MODAL ---------- */
+  .modal-bg{position:fixed;inset:0;background:rgba(3,7,18,.75);z-index:150;display:none;align-items:flex-end}
+  .modal-bg.show{display:flex}
+  .modal{background:var(--field);border-top:3px solid var(--red);border-radius:16px 16px 0 0;width:100%;
+    max-height:80vh;overflow-y:auto;padding:16px 14px 30px}
+  .modal h3{font-size:16px;color:#fff;letter-spacing:.03em;margin-bottom:2px}
+  .modal .msub{font-size:11px;color:var(--slate);margin-bottom:12px}
+  .pick-item{display:flex;align-items:center;gap:8px;padding:8px 4px;border-bottom:1px solid var(--dim2)}
+  .pick-item .pm{flex:1;font-size:12.5px;color:var(--chalk2);min-width:0}
+  .pick-item .pm b{color:#fff}
+  .pick-item .pr{font-size:12px;font-weight:800;color:var(--slate);white-space:nowrap;font-family:'Hanken Grotesk',inherit}
+  .pick-item .pp{font-size:10px;font-weight:800;padding:2px 8px;border-radius:12px;white-space:nowrap}
+  .modal-close{width:100%;margin-top:14px;background:var(--field3);color:#fff;border:1px solid var(--line);
+    border-radius:9px;padding:11px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+  /* ---------- NFL additions ---------- */
+  .trow.win{background:linear-gradient(90deg,var(--wc,transparent),transparent 88%)}
+  .g-qtr{padding:0 11px 6px;font-size:11px;font-weight:700;color:var(--red2)}
+  .ls-line{padding:0 11px 6px;font-size:10px;color:var(--slate);letter-spacing:.02em}
+  .seg{display:flex;gap:6px;padding:12px 10px 2px}
+  .seg button{flex:1;background:var(--field2);border:1px solid var(--line);color:var(--slate);border-radius:8px;
+    padding:8px 6px;font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;font-family:inherit}
+  .seg button.on{background:rgba(213,10,10,.14);border-color:var(--red);color:#fff}
+  .stand-hd .d,.stand-row .stand-d{min-width:42px;text-align:right}
+  .stand-row .stand-p{font-size:11px;color:var(--slate);min-width:38px;text-align:right}
+  .stand-row .stand-d{font-size:11px;color:var(--slate)}
+  .stand-hd .p{min-width:38px;text-align:right}
+  .stand-row .stand-s{font-size:11px;font-weight:800;min-width:30px;text-align:right}
+  .stand-row .stand-s.w{color:var(--grass2)} .stand-row .stand-s.l{color:var(--red2)}
+  .stand-hd .s{min-width:30px;text-align:right}
+  .seed{font-size:10px;font-weight:800;color:var(--gold);min-width:16px;text-align:center}
+  .foot{font-size:10px;color:var(--dim);text-align:center;margin:10px 4px 0;line-height:1.5}
+  .bye{background:var(--field2);border:1px dashed var(--line);border-radius:8px;padding:12px;margin-bottom:9px;
+    text-align:center;font-size:12px;font-weight:800;letter-spacing:.1em;color:var(--slate);text-transform:uppercase}
+  .season-line{display:flex;justify-content:center;gap:14px;flex-wrap:wrap;padding:10px 12px 0;font-size:11px;color:var(--chalk2)}
+  .season-line b{color:var(--gold)}
+  .lb-row{cursor:pointer}
+  .modal .tlogo{width:22px;height:22px}
+
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-eyebrow">National Football League · Official Schedule</div>
+  <div class="header-title">NFL <span class="ball">SCORECARD</span></div>
+  <div class="header-year">2 0 2 6</div>
+  <div class="header-sub">SEP 9 – JAN 10 &nbsp;·&nbsp; 32 TEAMS &nbsp;·&nbsp; 272 GAMES + POSTSEASON</div>
+  <div class="seam"></div>
+  <div class="header-name-row">
+    <span class="header-name-label">🏈 Scorecard for:</span>
+    <input id="cardName" type="text" placeholder="Your name" maxlength="24" autocomplete="off">
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" data-tab="games">Games<small>By date</small></button>
+  <button class="tab" data-tab="team">My Team<small>Full slate</small></button>
+  <button class="tab" data-tab="standings">Standings<small>Divisions</small></button>
+  <button class="tab" data-tab="league">League<small>Leaderboard</small></button>
+</div>
+
+<div class="predict-banner">🔮 Predict the final points before kickoff. Your pick <b>locks at game time</b>, then sits beside the <b>final</b> — <b>+5</b> exact score · <b>+3</b> both within 5 · <b>+1</b> right winner.</div>
+
+<div class="live-pill loading" id="livePill"><span class="dot"></span><span id="liveText">Loading today's games…</span></div>
+<div class="lock-banner" id="lockBanner"><span class="lb-ico">⏰</span><span class="lb-txt" id="lockTxt"></span><button class="lb-go" id="lockGo">Pick now</button></div>
+
+<!-- GAMES (by date) -->
+<div class="panel active" id="panel-games">
+  <div class="datenav">
+    <button class="nav" id="prevDay" aria-label="Previous day">‹</button>
+    <div class="datemid">
+      <div class="dlabel" id="dLabel">Today</div>
+      <div class="dsub" id="dSub"></div>
+      <input type="date" id="datePick" min="2026-09-09" max="2027-02-15">
+      <button class="today-btn" id="todayBtn">Today</button>
+    </div>
+    <button class="nav" id="nextDay" aria-label="Next day">›</button>
+  </div>
+  <div id="gamesList"></div>
+</div>
+
+<!-- MY TEAM -->
+<div class="panel" id="panel-team">
+  <div class="teampick">
+    <img id="teamLogo" alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E">
+    <select id="teamSelect"><option value="">Choose your team…</option></select>
+  </div>
+  <div class="season-line" id="teamSummary"></div>
+  <div id="teamList"><div class="empty">Pick a team to see their <b>full 18-week slate</b> and predict every game.</div></div>
+</div>
+
+<!-- STANDINGS -->
+<div class="panel" id="panel-standings">
+  <div class="seg" id="standSeg">
+    <button data-mode="div" class="on">Divisions</button>
+    <button data-mode="conf">Conferences</button>
+  </div>
+  <div id="standList"></div>
+</div>
+
+<!-- LEAGUE -->
+<div class="panel" id="panel-league">
+  <div class="lg-card">
+    <div class="lg-code-row">
+      <div>
+        <div class="lg-code-lbl">Invite code · share this</div>
+        <div class="lg-code" id="lgCode">—</div>
+        <div style="margin-top:5px"><span class="cap-chip" id="lgCap">— / 25 players</span></div>
+      </div>
+      <button class="lg-copy" id="lgCopy">Copy invite</button>
+    </div>
+    <div class="lg-join" id="lgJoin">
+      <div class="lg-join-lbl">🏈 Enter your name to join the board</div>
+      <div class="lg-join-row">
+        <input id="lgName" type="text" placeholder="Your name" maxlength="24" autocomplete="off">
+        <button id="lgJoinBtn">Join</button>
+      </div>
+    </div>
+    <div class="lg-me" id="lgMe"></div>
+    <div class="rem-row">
+      <div class="rr-txt" id="remTxt">Lock reminders are off.<small>Get a heads-up 30 minutes before kickoff.</small></div>
+      <button class="rem-btn" id="remBtn">Turn on</button>
+    </div>
+  </div>
+  <div class="lg-board-head" id="lgBoardHead" style="display:none">
+    <span class="day-label">Leaderboard</span><span class="day-line"></span>
+    <span class="lg-sync" id="lgSync"></span>
+  </div>
+  <div id="lgBoard"></div>
+  <div class="foot" id="lgFoot" style="display:none">Tap a player to see their locked picks against the final scores.</div>
+</div>
+
+<div class="stats-bar">
+  <div class="stat" id="statPredWrap"><div class="stat-val" id="statPred">0</div><div class="stat-lbl">Predicted</div></div>
+  <div class="stat" id="statPtsWrap"><div class="stat-val pts" id="statPts">0</div><div class="stat-lbl">Points</div></div>
+  <div class="stat" id="statPctWrap"><div class="stat-val" id="statPct">—</div><div class="stat-lbl">Win&nbsp;%</div></div>
+  <button class="refresh-btn" id="refreshBtn" title="Refresh scores" aria-label="Refresh scores">⟳</button>
+</div>
+
+<div class="toast" id="toast">Saved ✓</div>
+
+<div class="modal-bg" id="picksModal">
+  <div class="modal">
+    <h3 id="picksTitle">My picks</h3>
+    <div class="msub" id="picksSub"></div>
+    <div id="picksBody"></div>
+    <button class="modal-close" id="closePicks">Close</button>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* =====================================================================
+   NFL 2026 · MY SCORECARD
+   Same predict → lock → compare workflow as the MLB scorecard, adapted to
+   football. The schedule is pulled live from ESPN's public NFL data (no key)
+   through a same-origin proxy, so nothing is baked in. Picks persist per
+   device in localStorage and, once you join the league, are refereed by the
+   server (official kickoff times + official finals).
+===================================================================== */
+
+/* ---- OPTIONAL: if you host this file somewhere OTHER than the same
+   Netlify site as the proxy, paste your proxy base here, e.g.
+   var PROXY = "https://your-site.netlify.app";  Leave "" when the
+   index.html and the /api proxy live on the same site. ---- */
+var PROXY = "";
+
+/* ---- LEAGUE: the single invite code everyone on THIS deployment shares.
+   Change it once to your own (e.g. "FREEHOLD26") before you deploy, and every
+   person who opens your site joins that one board. 2–24 letters/numbers. ---- */
+var LEAGUE_CODE = "GRIDIRON26";
+var LEAGUE_NAME = "NFL 2026 Pick'em";
+
+/* ---- Season window (America/New_York game dates) ---- */
+var SEASON_MIN = "2026-09-09";   // Kickoff: Patriots @ Seahawks
+var SEASON_MAX = "2027-02-15";   // regular season ends Jan 10; postseason through the Super Bowl
+var ESPN_SB = "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard";
+var ESPN_ST = "https://site.api.espn.com/apis/v2/sports/football/nfl/standings?season=2026&level=3";
+
+/* ---------- TEAM DATA: ESPN id -> [name, abbr, primary, secondary] ---------- */
+var TEAM = {
+  1:["Falcons","ATL","#A71930","#000000"],   2:["Bills","BUF","#00338D","#D50A0A"],
+  3:["Bears","CHI","#0B1C3A","#E64100"],     4:["Bengals","CIN","#FB4F14","#000000"],
+  5:["Browns","CLE","#472A08","#FF3C00"],    6:["Cowboys","DAL","#002A5C","#B0B7BC"],
+  7:["Broncos","DEN","#0A2343","#FC4C02"],   8:["Lions","DET","#0076B6","#BBBBBB"],
+  9:["Packers","GB","#204E32","#FFB612"],   10:["Titans","TEN","#4495D2","#001532"],
+  11:["Colts","IND","#003B75","#FFFFFF"],   12:["Chiefs","KC","#E31837","#FFB612"],
+  13:["Raiders","LV","#000000","#A5ACAF"],   14:["Rams","LAR","#003594","#FFD100"],
+  15:["Dolphins","MIA","#008E97","#FC4C02"], 16:["Vikings","MIN","#4F2683","#FFC62F"],
+  17:["Patriots","NE","#002A5C","#C60C30"],  18:["Saints","NO","#D3BC8D","#000000"],
+  19:["Giants","NYG","#003C7F","#C9243F"],   20:["Jets","NYJ","#115740","#FFFFFF"],
+  21:["Eagles","PHI","#06424D","#000000"],   22:["Cardinals","ARI","#A40227","#FFFFFF"],
+  23:["Steelers","PIT","#000000","#FFB612"], 24:["Chargers","LAC","#0080C6","#FFC20E"],
+  25:["49ers","SF","#AA0000","#B3995D"],     26:["Seahawks","SEA","#002A5C","#69BE28"],
+  27:["Buccaneers","TB","#BD1C36","#3E3A35"],28:["Commanders","WSH","#5A1414","#FFB612"],
+  29:["Panthers","CAR","#0085CA","#000000"], 30:["Jaguars","JAX","#007487","#D7A22A"],
+  33:["Ravens","BAL","#29126F","#000000"],   34:["Texans","HOU","#021018","#EB0028"]
+};
+var DIVS = {
+  "AFC East":[2,15,17,20], "AFC North":[33,4,5,23], "AFC South":[34,11,30,10], "AFC West":[7,12,13,24],
+  "NFC East":[6,19,21,28], "NFC North":[3,8,9,16],  "NFC South":[1,29,18,27],  "NFC West":[22,14,25,26]
+};
+var ABBR_ID = {}; Object.keys(TEAM).forEach(function(id){ ABBR_ID[TEAM[id][1]] = +id; });
+
+function logoUrl(id){ var t=TEAM[id]; return t ? "https://a.espncdn.com/i/teamlogos/nfl/500/scoreboard/"+t[1].toLowerCase()+".png" : ""; }
+function lum(hex){ var n=parseInt(hex.slice(1),16), r=(n>>16)&255, g=(n>>8)&255, b=n&255; return (0.2126*r+0.7152*g+0.0722*b)/255; }
+/* team's own hex — falls back to the secondary (then a neutral) when the primary would vanish on navy */
+function teamColor(id){
+  var t=TEAM[id]; if(!t) return "#263257";
+  if(lum(t[2])>0.16) return t[2];
+  if(lum(t[3])>0.16 && lum(t[3])<0.92) return t[3];
+  return "#56628a";
+}
+function hexA(hex,a){ var n=parseInt(hex.slice(1),16); return "rgba("+((n>>16)&255)+","+((n>>8)&255)+","+(n&255)+","+a+")"; }
+function teamShort(id,fallback){ return (TEAM[id]&&TEAM[id][0])||fallback||"—"; }
+function teamAbbr(id,fallback){ return (TEAM[id]&&TEAM[id][1])||fallback||"?"; }
+
+/* ---------- storage helpers ---------- */
+function lsGet(k,d){ try{ var v=localStorage.getItem(k); return v==null?d:JSON.parse(v); }catch(e){ return d; } }
+function lsSet(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
+var PREDS   = lsGet("nfl2026_preds",{});    // {id:{a,h}}
+var RESULTS = lsGet("nfl2026_results",{});  // {id:{a,h}} official finals we've seen
+var META    = lsGet("nfl2026_meta",{});     // {id:{ai,hi,an,hn,d}} for picks ledger
+function savePreds(){ lsSet("nfl2026_preds",PREDS); }
+function saveResults(){ lsSet("nfl2026_results",RESULTS); }
+function saveMeta(){ lsSet("nfl2026_meta",META); }
+
+/* ---------- clock: server time wins over the device clock ---------- */
+var CLOCK_OFFSET = 0;
+function nowMs(){ return Date.now()+CLOCK_OFFSET; }
+function syncClock(r){
+  try{
+    var h=r.headers.get("x-server-time")||r.headers.get("date"); if(!h) return;
+    var t=/^\d+$/.test(h)?+h:Date.parse(h); if(isFinite(t)) CLOCK_OFFSET=t-Date.now();
+  }catch(e){}
+}
+
+/* ---------- date helpers (America/New_York = the NFL's game date) ---------- */
+function etYMD(d){ return d.toLocaleDateString("en-CA",{timeZone:"America/New_York"}); } // YYYY-MM-DD
+function todayYMD(){ return etYMD(new Date(nowMs())); }
+function shiftYMD(ymd,days){ var p=ymd.split("-"); var d=new Date(Date.UTC(+p[0],+p[1]-1,+p[2]));
+  d.setUTCDate(d.getUTCDate()+days); return d.toISOString().slice(0,10); }
+function y8(ymd){ return ymd.replace(/-/g,""); }
+function prettyDay(ymd){ var p=ymd.split("-"); var d=new Date(Date.UTC(+p[0],+p[1]-1,+p[2]));
+  return d.toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric",timeZone:"UTC"}); }
+function shortDay(ymd){ var p=ymd.split("-"); var d=new Date(Date.UTC(+p[0],+p[1]-1,+p[2]));
+  return d.toLocaleDateString(undefined,{weekday:"short",month:"short",day:"numeric",timeZone:"UTC"}); }
+function parseIso(s){ return Date.parse(/T\d\d:\d\dZ$/.test(s||"")?s.replace("Z",":00Z"):s); }
+function fmtTimeET(iso){ try{ return new Date(parseIso(iso)).toLocaleTimeString(undefined,
+  {hour:"numeric",minute:"2-digit",timeZone:"America/New_York"})+" ET"; }catch(e){ return ""; } }
+
+/* ---------- API fetch with fallback chain: same-origin proxy → Netlify function → direct ---------- */
+function schedEndpoints(params){
+  var direct = /^week=/.test(params)
+    ? ESPN_SB+"?dates=2026&seasontype=2&"+params+"&limit=100"
+    : ESPN_SB+"?"+params+"&limit=100";
+  return [
+    (PROXY||"") + "/api/nfl?type=schedule&" + params,
+    (PROXY||"") + "/.netlify/functions/scores?type=schedule&" + params,
+    direct
+  ];
+}
+function standEndpoints(){
+  return [
+    (PROXY||"") + "/api/nfl?type=standings&season=2026",
+    (PROXY||"") + "/.netlify/functions/scores?type=standings&season=2026",
+    ESPN_ST
+  ];
+}
+function tryChain(list,i){
+  if(i>=list.length) return Promise.reject(new Error("all endpoints failed"));
+  return fetch(list[i],{cache:"no-store"})
+    .then(function(r){ if(!r.ok) throw new Error("HTTP "+r.status); syncClock(r); return r.json(); })
+    .then(function(j){ if(!j||typeof j!=="object"||j.error) throw new Error("bad payload"); return j; })
+    .catch(function(){ return tryChain(list,i+1); });
+}
+
+/* ESPN's scoreboard rejects multi-day ranges (HTTP 400), so we ask for single days and merge.
+   Fetching the day either side too keeps us safe whichever timezone ESPN buckets games by;
+   callers then filter on the Eastern game-date. Succeeds if at least one day loads. */
+function fetchDays(days){
+  var ok=0, seen={}, events=[];
+  return Promise.all(days.map(function(d){
+    return tryChain(schedEndpoints("dates="+y8(d)),0).then(function(data){
+      ok++; (data.events||[]).forEach(function(e){ if(!seen[e.id]){ seen[e.id]=1; events.push(e); } });
+    }).catch(function(){});
+  })).then(function(){ if(!ok) throw new Error("no day loaded"); return {events:events}; });
+}
+
+/* ---------- normalize a raw ESPN event ---------- */
+function num(v){ if(v==null||v==="") return null; if(typeof v==="object") v=(v.value!=null?v.value:v.displayValue);
+  var n=Number(v); return isFinite(n)?n:null; }
+function normGame(ev){
+  var c=(ev.competitions&&ev.competitions[0])||{}, st=c.status||ev.status||{}, t=st.type||{};
+  var comps=c.competitors||[], H=null, A=null;
+  comps.forEach(function(x){ if(x.homeAway==="home") H=x; else if(x.homeAway==="away") A=x; });
+  if(!H||!A||!H.team||!A.team) return null;
+  function side(x){ return { id:+x.team.id, name:x.team.displayName||x.team.name, abbr:x.team.abbreviation,
+    pts:num(x.score), rec:(x.records&&x.records[0]&&x.records[0].summary)||"",
+    ls:(x.linescores||[]).map(function(l){ return num(l); }) }; }
+  var abs = t.state==="in"?"Live":(t.state==="post"?"Final":"Preview");
+  if(abs==="Final" && t.completed===false) abs="Live";
+  var period=st.period||0, clock=st.displayClock||"", detail=(t.detail||"");
+  var qtr="";
+  if(abs==="Live"){
+    if(/halftime/i.test(detail)) qtr="Halftime";
+    else if(/end of/i.test(detail)) qtr=detail.replace(/\s*-.*$/,"");
+    else qtr=(period>4?"OT":"Q"+period)+" "+clock;
+  }
+  var tv=[]; (c.broadcasts||[]).forEach(function(b){ (b.names||[]).forEach(function(n){ tv.push(n); }); });
+  if(!tv.length && typeof c.broadcast==="string" && c.broadcast) tv=[c.broadcast];
+  tv=tv.filter(function(v,i,s){ return s.indexOf(v)===i; }).slice(0,2);
+  var ad=(c.venue&&c.venue.address)||{};
+  return {
+    pk:String(ev.id), iso:ev.date, abs:abs, detail:t.shortDetail||detail, week:(ev.week&&ev.week.number)||0,
+    away:side(A), home:side(H),
+    venue:(c.venue&&c.venue.fullName)||"", city:ad.city||"", state:ad.state||"", tv:tv,
+    qtr:qtr, extras:(period>4&&abs==="Final")?"OT":""
+  };
+}
+function normEvents(data){ return ((data&&data.events)||[]).map(normGame).filter(Boolean)
+  .sort(function(a,b){ return parseIso(a.iso)-parseIso(b.iso); }); }
+
+/* ---------- scoring (mirrors the server exactly) ---------- */
+/* +5 exact final score · +3 both scores within 5 points · +1 right winner (or tie) · else 0 */
+function points(pa,ph,oa,oh){
+  if(pa===oa && ph===oh) return 5;
+  if(Math.abs(pa-oa)<=5 && Math.abs(ph-oh)<=5) return 3;
+  return sgn(pa-ph)===sgn(oa-oh) ? 1 : 0;
+}
+function sgn(x){ return x>0?1:x<0?-1:0; }
+function winnerRight(pa,ph,oa,oh){ return sgn(pa-ph)===sgn(oa-oh); }
+function predOf(pk){ var s=PREDS[pk];
+  if(s && s.a!==""&&s.a!=null && s.h!==""&&s.h!=null) return {a:parseInt(s.a,10),h:parseInt(s.h,10)}; return null; }
+function isLocked(gm){ return gm.abs!=="Preview" || parseIso(gm.iso) <= nowMs(); }
+
+/* remember official finals + meta so points persist across views */
+function recordResult(gm){
+  if(gm.abs==="Final" && gm.away.pts!=null && gm.home.pts!=null){
+    RESULTS[gm.pk]={a:gm.away.pts,h:gm.home.pts}; saveResults();
+  }
+  META[gm.pk]={ai:gm.away.id,hi:gm.home.id,an:teamAbbr(gm.away.id,gm.away.abbr),
+    hn:teamAbbr(gm.home.id,gm.home.abbr),d:etYMD(new Date(parseIso(gm.iso)))}; saveMeta();
+}
+
+/* ---------- render one game card ---------- */
+function gameCard(gm){
+  var locked=isLocked(gm), pred=predOf(gm.pk), off=(gm.away.pts!=null&&gm.home.pts!=null&&gm.abs!=="Preview")
+    ? {a:gm.away.pts,h:gm.home.pts} : null;
+  var final = gm.abs==="Final", live = gm.abs==="Live";
+  recordResult(gm);
+
+  var card=document.createElement("div");
+  card.className="game"+(final?" final":live?" live":"");
+  card.style.borderLeftColor = teamColor(gm.home.id);
+  card.dataset.pk=gm.pk;
+
+  var statusHtml;
+  if(final){ statusHtml='<span class="g-status final">Final'+(gm.extras?("/"+gm.extras):"")+'</span>'; }
+  else if(live){ statusHtml='<span class="g-status live"><span class="ld"></span>Live</span>'; }
+  else { statusHtml='<span class="g-status pre">'+(locked?"Kickoff":"Scheduled")+'</span>'; }
+  var wk = gm.week ? ' <span style="color:var(--slate);font-size:10px">Wk '+gm.week+'</span>' : '';
+
+  var tvHtml = gm.tv.length ? '<div class="g-tv"><strong>'+esc(gm.tv[0])+'</strong>'+
+    (gm.tv[1]?'<br>'+esc(gm.tv[1]):'')+'</div>' : '<div class="g-tv"></div>';
+
+  var top='<div class="game-top"><span class="g-time">'+esc(fmtTimeET(gm.iso))+wk+'</span>'+statusHtml+tvHtml+'</div>';
+
+  var aWin = final && off && off.a>off.h, hWin = final && off && off.h>off.a;
+  var lsHtml="";
+  if((final||live) && gm.home.ls.length && gm.home.ls.some(function(v){return v!=null;}))
+    lsHtml='<div class="ls-line">'+esc(teamAbbr(gm.away.id,gm.away.abbr))+' '+gm.away.ls.map(function(v){return v==null?"–":v;}).join("·")+
+      ' &nbsp;|&nbsp; '+esc(teamAbbr(gm.home.id,gm.home.abbr))+' '+gm.home.ls.map(function(v){return v==null?"–":v;}).join("·")+'</div>';
+  card.innerHTML = top +
+    teamRow(gm,"away",locked,pred,off,aWin) +
+    teamRow(gm,"home",locked,pred,off,hWin) +
+    (live && gm.qtr ? '<div class="g-qtr">▸ '+esc(gm.qtr)+'</div>' : '') + lsHtml +
+    (gm.venue ? '<div class="g-venue">📍 '+esc(gm.venue)+
+      (gm.city ? ' <span class="g-city">· '+esc(gm.city)+(gm.state?', '+esc(gm.state):'')+'</span>' : '')+
+      '</div>' : '') +
+    ptsStrip(pred,off,gm.pk,final) +
+    hlLink(gm);
+
+  if(!locked){
+    ["away","home"].forEach(function(side){
+      var inp=card.querySelector('.run-in[data-side="'+side+'"]');
+      if(inp){ inp.addEventListener("input",function(){ onPredict(gm,side,inp.value); });
+               inp.addEventListener("change",function(){ onPredict(gm,side,inp.value); }); }
+    });
+  }
+  return card;
+}
+
+function teamRow(gm,side,locked,pred,off,win){
+  var t=gm[side], rec=t.rec||"";
+  var right;
+  if(!locked){
+    var v=(PREDS[gm.pk]&&PREDS[gm.pk][side==="away"?"a":"h"]); if(v==null)v="";
+    right='<div class="tright"><input class="run-in" data-side="'+side+'" type="number" min="0" max="99" '+
+          'inputmode="numeric" aria-label="'+esc(teamShort(t.id,t.name))+' predicted points" value="'+esc(v)+'" placeholder="–"></div>';
+  } else {
+    var offVal = off ? (side==="away"?off.a:off.h) : null;
+    var pickVal = pred ? (side==="away"?pred.a:pred.h) : null;
+    var chip = pred ? '<span class="pick-chip">pick <b>'+pickVal+'</b></span>'
+                    : '<span class="pick-chip">no pick</span>';
+    var num_ = (offVal!=null) ? '<span class="run-off'+(win?" win":"")+'">'+offVal+'</span>'
+                              : '<span class="run-off" style="color:var(--dim)">·</span>';
+    right='<div class="tright">'+chip+num_+'</div>';
+  }
+  var wstyle = win ? ' style="--wc:'+hexA(teamColor(t.id),.22)+'"' : '';
+  return '<div class="trow'+(win?" win":"")+'"'+wstyle+'>'+
+    '<img class="tlogo" src="'+logoUrl(t.id)+'" alt="" loading="lazy" '+
+      'onerror="this.style.visibility=\'hidden\'">'+
+    '<div class="tinfo"><div class="tname">'+esc(teamShort(t.id,t.name))+
+      '</div>'+(rec?'<div class="trec">'+esc(rec)+'</div>':'')+'</div>'+right+'</div>';
+}
+function ptsStrip(pred,off,pk,final){
+  if(pk && REJECTED[pk]) return '<div class="pts-strip"><span class="pts-badge p0 pick-rejected">\u26d4 Not counted \u00b7 '+esc(REJECTED[pk])+'</span></div>';
+  if(pk && QUEUE[pk]) return '<div class="pts-strip"><span class="pts-badge p1">\u21bb Saving pick\u2026</span></div>';
+  if(!(pred&&off&&final)) return "";
+  var p=points(pred.a,pred.h,off.a,off.h);
+  var txt = p===5?'✓ Exact score · +5':p===3?'Within 5 · +3':p===1?'Right winner · +1':'Missed · 0';
+  var cls = p===5?"p5":p===3?"p3":p===1?"p1":"p0";
+  return '<div class="pts-strip"><span class="pts-badge '+cls+'">'+txt+'</span></div>';
+}
+function hlLink(gm){
+  var q=encodeURIComponent(teamShort(gm.away.id,gm.away.name)+" vs "+teamShort(gm.home.id,gm.home.name)+
+    " "+etYMD(new Date(parseIso(gm.iso)))+" NFL highlights");
+  var url="https://www.youtube.com/results?search_query="+q;
+  var future = parseIso(gm.iso) > nowMs();
+  var cls = future ? "hl-link upcoming" : "hl-link";
+  var txt = future ? "Highlights after game" : "Watch Highlights";
+  return '<a class="'+cls+'" href="'+url+'" target="_blank" rel="noopener noreferrer">'+
+    '<span class="hl-icon">▶</span><span class="hl-text">'+txt+'</span>'+
+    '<span class="hl-note">youtube</span></a>';
+}
+function onPredict(gm,side,val){
+  if(!PREDS[gm.pk]) PREDS[gm.pk]={};
+  PREDS[gm.pk][side==="away"?"a":"h"]=val;
+  META[gm.pk]={ai:gm.away.id,hi:gm.home.id,an:teamAbbr(gm.away.id,gm.away.abbr),
+    hn:teamAbbr(gm.home.id,gm.home.abbr),d:etYMD(new Date(parseIso(gm.iso)))};
+  savePreds(); saveMeta(); updateStats();
+  // when BOTH totals are in, send the complete pick to the league server
+  var p=predOf(gm.pk);
+  if(p) submitPickDebounced(gm.pk,p);
+  scheduleReminders();
+}
+function esc(s){ return (s+"").replace(/[&<>"]/g,function(c){
+  return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+
+/* ---------- render groups of games (a day, or a week) ---------- */
+function renderGroups(container,groups,emptyMsg){
+  container.innerHTML="";
+  var any=false;
+  groups.forEach(function(g){
+    var sec=document.createElement("div"); sec.className="day-section";
+    sec.innerHTML='<div class="day-header"><span class="day-label">'+esc(g.label)+
+      '</span><span class="day-line"></span></div>';
+    if(g.bye){ sec.insertAdjacentHTML("beforeend",'<div class="bye">Bye week</div>'); container.appendChild(sec); any=true; return; }
+    if(!g.games.length) return;
+    any=true;
+    g.games.forEach(function(gm){ sec.appendChild(gameCard(gm)); });
+    container.appendChild(sec);
+  });
+  if(!any){ container.innerHTML='<div class="empty">'+(emptyMsg||"No games scheduled.")+'</div>'; }
+  updateStats();
+}
+
+/* ---------- GAMES tab (by date) ---------- */
+function clampDate(d){ return d<SEASON_MIN?SEASON_MIN:(d>SEASON_MAX?SEASON_MAX:d); }
+var curDate = clampDate(todayYMD());
+
+function loadGames(){
+  var list=document.getElementById("gamesList");
+  document.getElementById("dLabel").textContent = prettyDay(curDate);
+  document.getElementById("dSub").textContent = curDate===todayYMD()?"Today's slate":"";
+  document.getElementById("datePick").value=curDate;
+  list.innerHTML='<div class="skl"></div><div class="skl"></div><div class="skl"></div>';
+  setPill("loading","Loading games for "+prettyDay(curDate)+"…");
+  var asked=curDate;
+  // ask for the day either side and keep only games whose Eastern game-date matches (timezone-proof)
+  fetchDays([shiftYMD(curDate,-1),curDate,shiftYMD(curDate,1)])
+    .then(function(data){
+      if(asked!==curDate) return;
+      var games=normEvents(data).filter(function(g){ return etYMD(new Date(parseIso(g.iso)))===curDate; });
+      if(games.length){
+        var wk=games[0].week; document.getElementById("dSub").textContent=(wk?"Week "+wk+" · ":"")+games.length+" game"+(games.length>1?"s":"");
+        renderGroups(list,[{label:prettyDay(curDate),games:games}]);
+      } else {
+        renderGroups(list,[],'No NFL games on '+esc(prettyDay(curDate))+'.<br>'+
+          '<button class="today-btn" id="jumpPrev">‹ Previous game day</button> '+
+          '<button class="today-btn" id="jumpNext">Next game day ›</button>');
+        var jp=document.getElementById("jumpPrev"), jn=document.getElementById("jumpNext");
+        if(jp) jp.onclick=function(){ jumpGameDay(-1); };
+        if(jn) jn.onclick=function(){ jumpGameDay(1); };
+      }
+      pillDone();
+    })
+    .catch(function(){ if(asked!==curDate) return;
+      list.innerHTML='<div class="empty">Couldn\'t reach live scores.<br><b>Your saved predictions are safe.</b><br>Check your connection and try again.</div>';
+      setPill("off","Offline — showing saved picks. Live scores return when you reconnect."); });
+}
+function setDate(ymd){ curDate=clampDate(ymd); loadGames(); }
+/* NFL days are sparse — jump to the nearest day that actually has games */
+function jumpGameDay(dir){
+  var days=[]; for(var i=1;i<=8;i++){ var d=shiftYMD(curDate,dir*i); if(d>=SEASON_MIN&&d<=SEASON_MAX) days.push(d); }
+  if(!days.length){ toast("That's the edge of the season"); return; }
+  fetchDays(days).then(function(data){
+    var found=normEvents(data).map(function(g){ return etYMD(new Date(parseIso(g.iso))); })
+      .filter(function(d){ return dir>0?d>curDate:d<curDate; }).sort();
+    if(!found.length){ toast("No more games in that direction yet"); return; }
+    setDate(dir>0?found[0]:found[found.length-1]);
+  }).catch(function(){ toast("Couldn't reach the schedule"); });
+}
+document.getElementById("prevDay").onclick=function(){ setDate(shiftYMD(curDate,-1)); };
+document.getElementById("nextDay").onclick=function(){ setDate(shiftYMD(curDate,1)); };
+document.getElementById("todayBtn").onclick=function(){ setDate(todayYMD()); };
+document.getElementById("datePick").onchange=function(e){ if(e.target.value) setDate(e.target.value); };
+
+/* ---------- MY TEAM tab (full 18-week slate) ---------- */
+var WEEKS = {};   // week -> {t, games:[normalized]}
+(function fillTeams(){
+  var sel=document.getElementById("teamSelect");
+  Object.keys(TEAM).map(Number).map(function(id){ return [id,TEAM[id][0]]; })
+    .sort(function(a,b){ return a[1]<b[1]?-1:1; })
+    .forEach(function(t){ var o=document.createElement("option"); o.value=t[0]; o.textContent=t[1]; sel.appendChild(o); });
+  var saved=lsGet("nfl2026_myteam",""); if(saved){ sel.value=saved; }
+})();
+document.getElementById("teamSelect").onchange=function(e){
+  var id=e.target.value; lsSet("nfl2026_myteam",id); loadTeam(id);
+};
+function fetchWeek(w){
+  var c=WEEKS[w];
+  if(c && (Date.now()-c.t<45000 || c.games.every(function(g){ return g.abs==="Final"; }) && c.games.length)) return Promise.resolve(c.games);
+  return tryChain(schedEndpoints("week="+w),0).then(function(data){
+    var games=normEvents(data); WEEKS[w]={t:Date.now(),games:games}; return games;
+  });
+}
+function loadTeam(id){
+  var box=document.getElementById("teamList"), logo=document.getElementById("teamLogo"), sum=document.getElementById("teamSummary");
+  if(!id){ box.innerHTML='<div class="empty">Pick a team to see their <b>full 18-week slate</b> and predict every game.</div>';
+    sum.innerHTML=""; logo.src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E"; return; }
+  id=+id; logo.src=logoUrl(id);
+  box.innerHTML='<div class="skl"></div><div class="skl"></div><div class="skl"></div>';
+  var weeks=[]; for(var w=1;w<=18;w++) weeks.push(w);
+  var failed=0, results={}, asked=id;
+  function batch(i){
+    var part=weeks.slice(i,i+6); if(!part.length) return Promise.resolve();
+    return Promise.all(part.map(function(w){
+      return fetchWeek(w).then(function(g){ results[w]=g; }).catch(function(){ failed++; results[w]=null; });
+    })).then(function(){ return batch(i+6); });
+  }
+  batch(0).then(function(){
+    if(asked!==id || document.getElementById("teamSelect").value!=String(id)) return;
+    if(failed===18){ box.innerHTML='<div class="empty">Couldn\'t load this team\'s schedule.<br><b>Saved picks are safe.</b></div>'; return; }
+    var groups=[], w_, W=0, L=0, T=0, made=0, pts_=0, sawAny=false;
+    for(w_=1;w_<=18;w_++){
+      var all=results[w_]; if(all===null||all===undefined) continue;
+      var mine=all.filter(function(g){ return g.home.id===id||g.away.id===id; });
+      if(!mine.length){ if(all.length) groups.push({label:"Week "+w_,bye:true}); continue; }
+      sawAny=true;
+      mine.forEach(function(g){
+        if(g.abs==="Final" && g.home.pts!=null){
+          var my=g.home.id===id?g.home.pts:g.away.pts, th=g.home.id===id?g.away.pts:g.home.pts;
+          if(my>th) W++; else if(my<th) L++; else T++;
+        }
+        var pr=predOf(g.pk); if(pr) made++;
+        if(pr && g.abs==="Final"){ pts_+=points(pr.a,pr.h,g.away.pts,g.home.pts); }
+      });
+      groups.push({label:"Week "+w_+" · "+shortDay(etYMD(new Date(parseIso(mine[0].iso)))),games:mine});
+    }
+    sum.innerHTML='<span>Record <b>'+W+'-'+L+(T?'-'+T:'')+'</b></span><span>Picks <b>'+made+'</b></span><span>Pick points <b>'+pts_+'</b></span>';
+    renderGroups(box,groups,"No games found for this team yet.");
+    if(failed) box.insertAdjacentHTML("beforeend",'<div class="foot">'+failed+' week'+(failed>1?'s':'')+' couldn\'t load — tap ⟳ to retry.</div>');
+    if(!sawAny && !failed) box.innerHTML='<div class="empty">No games found for this team yet.</div>';
+  });
+}
+
+/* ---------- STANDINGS tab ---------- */
+var standingsLoaded=false, STAND={}, standMode="div";
+function parseStandings(data){
+  var map={};
+  (function walk(n){
+    if(!n||typeof n!=="object") return;
+    if(n.standings&&n.standings.entries) n.standings.entries.forEach(function(e){
+      if(!e.team) return;
+      var s={}; (e.stats||[]).forEach(function(x){ s[x.name]=x; });
+      function v(k){ return s[k]&&s[k].value!=null?Number(s[k].value):null; }
+      map[e.team.id]={ w:v("wins")||0, l:v("losses")||0, t:v("ties")||0,
+        pct:v("winPercent")!=null?v("winPercent"):0, pf:v("pointsFor")||0, pa:v("pointsAgainst")||0,
+        diff:v("pointDifferential")!=null?v("pointDifferential"):(v("differential")||0),
+        strk:(s.streak&&s.streak.displayValue)||"", seed:v("playoffSeed") };
+    });
+    (n.children||[]).forEach(walk);
+  })(data);
+  return map;
+}
+function standRow(id,i,lead,seedNo){
+  var s=STAND[id]||{w:0,l:0,t:0,pct:0,diff:0,strk:""};
+  var pct=(s.w+s.l+s.t)?(s.pct||((s.w+s.t/2)/(s.w+s.l+s.t))).toFixed(3).replace(/^0/,""):".000";
+  var st=s.strk||"", cls=st.charAt(0)==="W"?" w":st.charAt(0)==="L"?" l":"";
+  return '<div class="stand-row'+(lead?" lead":"")+'">'+
+    (seedNo!=null?'<span class="seed">'+seedNo+'</span>':'')+
+    '<img src="'+logoUrl(id)+'" alt="" loading="lazy" onerror="this.style.visibility=\'hidden\'">'+
+    '<span class="stand-name">'+esc(teamShort(id))+'</span>'+
+    '<span class="stand-wl">'+s.w+'-'+s.l+(s.t?'-'+s.t:'')+'</span>'+
+    '<span class="stand-p">'+pct+'</span>'+
+    '<span class="stand-d">'+(s.diff>0?"+":"")+s.diff+'</span>'+
+    '<span class="stand-s'+cls+'">'+esc(st||"—")+'</span></div>';
+}
+function sortIds(ids){
+  return ids.slice().sort(function(a,b){ var x=STAND[a]||{pct:0,diff:0}, y=STAND[b]||{pct:0,diff:0};
+    return (y.pct-x.pct)||(y.diff-x.diff)||(teamShort(a)<teamShort(b)?-1:1); });
+}
+var HEAD='<div class="stand-hd"><span class="a">Team</span><span class="b">W-L-T</span><span class="p">PCT</span><span class="d">DIFF</span><span class="s">STRK</span></div>';
+function renderStandings(){
+  var box=document.getElementById("standList"), html="";
+  if(standMode==="div"){
+    Object.keys(DIVS).forEach(function(name){
+      html+='<div class="div-block"><div class="div-head">'+esc(name)+'</div>'+HEAD;
+      sortIds(DIVS[name]).forEach(function(id,i){ html+=standRow(id,i,i===0); });
+      html+='</div>';
+    });
+  } else {
+    ["AFC","NFC"].forEach(function(conf){
+      var ids=[]; Object.keys(DIVS).forEach(function(n){ if(n.indexOf(conf)===0) ids=ids.concat(DIVS[n]); });
+      var sorted=sortIds(ids);
+      html+='<div class="div-block"><div class="div-head">'+conf+' · playoff picture</div>'+HEAD;
+      sorted.forEach(function(id,i){ html+=standRow(id,i,i<7,i+1); });
+      html+='</div>';
+    });
+  }
+  html+='<div class="foot">Ordered by win % then point differential. Official tiebreakers and playoff seeding can differ. Gold marks a division leader / playoff position.</div>';
+  box.innerHTML=html;
+}
+function loadStandings(){
+  var box=document.getElementById("standList");
+  box.innerHTML='<div class="skl"></div><div class="skl"></div><div class="skl"></div>';
+  tryChain(standEndpoints(),0).then(function(data){
+    STAND=parseStandings(data);
+    standingsLoaded=true; renderStandings();
+  }).catch(function(){ box.innerHTML='<div class="empty">Couldn\'t load standings.<br><b>Try ⟳ in a moment.</b></div>'; });
+}
+document.querySelectorAll("#standSeg button").forEach(function(b){ b.onclick=function(){
+  document.querySelectorAll("#standSeg button").forEach(function(x){ x.classList.remove("on"); }); b.classList.add("on");
+  standMode=b.dataset.mode; document.querySelector('.tab[data-tab="standings"] small').textContent=standMode==="div"?"Divisions":"Conferences";
+  if(standingsLoaded) renderStandings();
+};});
+
+/* ---------- live pill ---------- */
+var pill=document.getElementById("livePill"), pillTxt=document.getElementById("liveText");
+function setPill(cls,msg){ pill.className="live-pill "+cls; pillTxt.textContent=msg; }
+function pillDone(){
+  var when=new Date();
+  setPill("ok","✓ Live · updated "+when.toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"}));
+}
+
+/* ---------- stats bar + picks ledger ---------- */
+function myTally(){
+  var predKeys=Object.keys(PREDS).filter(function(pk){ return predOf(pk); });
+  var predicted=predKeys.length, pts=0, decided=0, correct=0;
+  predKeys.forEach(function(pk){
+    var off=RESULTS[pk]; if(!off) return; var pr=predOf(pk); if(!pr) return;
+    pts+=points(pr.a,pr.h,off.a,off.h); decided++;
+    if(winnerRight(pr.a,pr.h,off.a,off.h)) correct++;
+  });
+  return {points:pts,predicted:predicted,decided:decided,correct:correct};
+}
+/* The stats bar shows the SERVER's official tally whenever we have it; the
+   local calculation is only a fallback for display while offline. */
+var SERVER_ME=null;
+function updateStats(){
+  var t=SERVER_ME||myTally();
+  document.getElementById("statPred").textContent=t.predicted;
+  document.getElementById("statPts").textContent=t.points;
+  document.getElementById("statPct").textContent=t.decided?Math.round(t.correct/t.decided*100)+"%":"—";
+}
+function ptsClass(p){ return p===5?"p5":p===3?"p3":p===1?"p1":"p0"; }
+function ptsLabel(p){ return p===5?"+5":p===3?"+3":p===1?"+1":"0"; }
+
+/* Shared renderer for the picks modal: items = [{an,hn,d,pa,ph,off:{a,h}|null}] */
+function renderPickItems(items){
+  return items.map(function(it){
+    var pl, res="—";
+    if(it.off){ var p=points(it.pa,it.ph,it.off.a,it.off.h);
+      pl='<span class="pp pts-badge '+ptsClass(p)+'">'+ptsLabel(p)+'</span>'; res=it.off.a+"-"+it.off.h; }
+    else pl='<span class="pp" style="background:rgba(139,150,184,.14);color:var(--slate)">pending</span>';
+    return '<div class="pick-item">'+
+      '<img class="tlogo" src="'+logoUrl(ABBR_ID[it.an])+'" alt="" onerror="this.style.visibility=\'hidden\'">'+
+      '<span class="pm"><b>'+esc(it.an||"?")+'</b> @ <b>'+esc(it.hn||"?")+'</b><br>'+
+        '<span style="font-size:10px;color:var(--slate)">'+esc(it.d||"")+'</span></span>'+
+      '<span class="pr">pick '+it.pa+'-'+it.ph+'<br><span style="color:var(--chalk2)">final '+res+'</span></span>'+
+      pl+'</div>';
+  }).join("");
+}
+function showModal(title,sub,bodyHtml){
+  document.getElementById("picksTitle").textContent=title;
+  document.getElementById("picksSub").textContent=sub;
+  document.getElementById("picksBody").innerHTML=bodyHtml;
+  document.getElementById("picksModal").classList.add("show");
+}
+function openPicks(){
+  var keys=Object.keys(PREDS).filter(function(pk){ return predOf(pk); })
+    .sort(function(a,b){ var da=(META[a]&&META[a].d)||"", db=(META[b]&&META[b].d)||""; return db<da?-1:1; });
+  var decided=0,pts_=0;
+  keys.forEach(function(pk){ var off=RESULTS[pk]; if(off){ var pr=predOf(pk); pts_+=points(pr.a,pr.h,off.a,off.h); decided++; } });
+  var sub=keys.length+" prediction"+(keys.length===1?"":"s")+" · "+decided+" decided · "+pts_+" pts";
+  var body = !keys.length
+    ? '<div class="empty" style="padding:28px 8px">No predictions yet. Head to <b>Games</b> and call some scores.</div>'
+    : renderPickItems(keys.map(function(pk){ var m=META[pk]||{}, pr=predOf(pk);
+        return {an:m.an,hn:m.hn,d:m.d,pa:pr.a,ph:pr.h,off:RESULTS[pk]||null}; }));
+  showModal("My picks",sub,body);
+}
+function openMemberPicks(pid,name){
+  if(pid===PID){ openPicks(); return; }
+  showModal(name+"'s picks","Loading…",'<div class="skl"></div><div class="skl"></div>');
+  getChain([(PROXY||"")+"/api/league?code="+encodeURIComponent(LEAGUE_CODE)+"&who="+encodeURIComponent(pid),
+    (PROXY||"")+"/.netlify/functions/league?code="+encodeURIComponent(LEAGUE_CODE)+"&who="+encodeURIComponent(pid)],0)
+  .then(function(d){
+    var items=(d.picks||[]).map(function(p){ return {an:p.an,hn:p.hn,d:etYMD(new Date(parseIso(p.iso))),pa:p.a,ph:p.h,off:p.final}; });
+    var dec=items.filter(function(i){return i.off;}).length, tot=0;
+    items.forEach(function(i){ if(i.off) tot+=points(i.pa,i.ph,i.off.a,i.off.h); });
+    showModal(d.name+"'s picks",items.length+" locked · "+dec+" decided · "+tot+" pts",
+      items.length?renderPickItems(items):'<div class="empty" style="padding:28px 8px">No locked picks yet.<br>Picks are revealed at kickoff.</div>');
+  }).catch(function(){ showModal(name+"'s picks","",'<div class="empty" style="padding:28px 8px">Couldn\'t load picks right now.</div>'); });
+}
+document.getElementById("statPtsWrap").onclick=openPicks;
+document.getElementById("statPredWrap").onclick=openPicks;
+document.getElementById("statPctWrap").onclick=openPicks;
+document.getElementById("closePicks").onclick=function(){ document.getElementById("picksModal").classList.remove("show"); };
+document.getElementById("picksModal").onclick=function(e){ if(e.target.id==="picksModal") e.target.classList.remove("show"); };
+
+/* ---------- name field ---------- */
+var nameInput=document.getElementById("cardName");
+nameInput.value=lsGet("nfl2026_name","");
+nameInput.addEventListener("input",function(){ lsSet("nfl2026_name",nameInput.value); });
+
+/* ---------- refresh ---------- */
+document.getElementById("refreshBtn").onclick=function(){
+  toast("Refreshing…");
+  refreshActive();
+};
+
+/* ---------- tabs ---------- */
+var tabs=document.querySelectorAll(".tab"), panels={games:"panel-games",team:"panel-team",standings:"panel-standings",league:"panel-league"};
+var activeTab="games";
+tabs.forEach(function(tab){ tab.onclick=function(){
+  tabs.forEach(function(t){ t.classList.remove("active"); }); tab.classList.add("active");
+  Object.keys(panels).forEach(function(k){ document.getElementById(panels[k]).classList.remove("active"); });
+  activeTab=tab.dataset.tab; document.getElementById(panels[activeTab]).classList.add("active");
+  if(activeTab==="standings" && !standingsLoaded) loadStandings();
+  if(activeTab==="team"){ var id=document.getElementById("teamSelect").value; if(id && !document.getElementById("teamList").querySelector(".game")) loadTeam(id); }
+  if(activeTab==="league"){ loadBoard(); }
+  pill.style.display = (activeTab==="standings"||activeTab==="league") ? "none" : "flex";
+};});
+
+function refreshActive(){
+  if(activeTab==="games") loadGames();
+  else if(activeTab==="team"){ var id=document.getElementById("teamSelect").value; if(id){ WEEKS={}; loadTeam(id); } }
+  else if(activeTab==="standings") loadStandings();
+  else if(activeTab==="league") loadBoard();
+}
+
+/* ================= LEAGUE — server is the source of truth ================= */
+/* Devices send PICKS, never points. The server fetches official NFL results,
+   validates each pick against the real kickoff time, and computes every
+   score. The leaderboard and the stats bar both read those server numbers, so
+   the scorecard and the board can't drift apart — and can't be tampered with. */
+
+var PID = lsGet("nfl2026_pid","");
+if(!PID){ PID="p"+Math.random().toString(36).slice(2,10)+Date.now().toString(36); lsSet("nfl2026_pid",PID); }
+function myName(){ return (lsGet("nfl2026_name","")||"").trim(); }
+
+var LG_GET = function(){ return [ (PROXY||"")+"/api/league?code="+encodeURIComponent(LEAGUE_CODE)+"&pid="+encodeURIComponent(PID),
+  (PROXY||"")+"/.netlify/functions/league?code="+encodeURIComponent(LEAGUE_CODE)+"&pid="+encodeURIComponent(PID) ]; };
+var LG_POST = function(){ return [ (PROXY||"")+"/api/league", (PROXY||"")+"/.netlify/functions/league" ]; };
+
+function getChain(list,i){
+  if(i>=list.length) return Promise.reject({net:true});
+  return fetch(list[i],{cache:"no-store"}).then(function(r){
+    syncClock(r);
+    return r.json().then(function(j){ if(!r.ok) throw {status:r.status,body:j}; return j; });
+  }).catch(function(e){ if(e&&e.status) throw e; return getChain(list,i+1); });
+}
+function postChain(list,i,body){
+  if(i>=list.length) return Promise.reject({net:true});
+  return fetch(list[i],{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)})
+    .then(function(r){ syncClock(r); return r.json().then(function(j){ if(!r.ok) throw {status:r.status,body:j}; return j; }); })
+    .catch(function(e){ if(e&&e.status) throw e; return postChain(list,i+1,body); });
+}
+
+var SERVER_BOARD=null, REJECTED=lsGet("nfl2026_rejected",{});
+function saveRejected(){ lsSet("nfl2026_rejected",REJECTED); }
+
+function applyBoard(b){
+  if(!b) return;
+  SERVER_BOARD=b;
+  var me=null; (b.members||[]).forEach(function(m){ if(m.pid===PID) me=m; });
+  SERVER_ME = me ? {points:me.points,predicted:me.predicted,decided:me.decided,correct:me.correct} : null;
+  // restore picks made on another device
+  if(b.mine && b.mine.picks){
+    var changed=false;
+    Object.keys(b.mine.picks).forEach(function(pk){
+      var sp=b.mine.picks[pk];
+      if(!PREDS[pk] || PREDS[pk].a!=sp.a || PREDS[pk].h!=sp.h){
+        if(QUEUE[pk]) return;                 // don't clobber a pick still waiting to be sent
+        PREDS[pk]={a:sp.a,h:sp.h}; changed=true;
+        if(!META[pk]&&sp.d){ META[pk]={an:sp.an,hn:sp.hn,ai:ABBR_ID[sp.an],hi:ABBR_ID[sp.hn],
+          d:sp.d.slice(0,4)+"-"+sp.d.slice(4,6)+"-"+sp.d.slice(6,8)}; }
+      }
+    });
+    if(changed){ savePreds(); saveMeta(); refreshVisibleCards(); }
+  }
+  updateStats(); setSync(true);
+  if(activeTab==="league") renderBoard(b);
+}
+function refreshVisibleCards(){ if(activeTab==="games"||activeTab==="team") refreshActive(); }
+
+/* ---------- pick queue: survives reloads, retries on failure ---------- */
+var QUEUE=lsGet("nfl2026_queue",{}), qTimer=null, flushing=false;
+function saveQueue(){ lsSet("nfl2026_queue",QUEUE); }
+function submitPickDebounced(pk,p){
+  if(!myName()) return;                       // must join before picks count
+  var m=META[pk]||{};
+  QUEUE[pk]={a:p.a,h:p.h,d:y8(m.d||""),an:m.an||"",hn:m.hn||""}; saveQueue();
+  delete REJECTED[pk]; saveRejected();
+  clearTimeout(qTimer); qTimer=setTimeout(flushQueue,1200);
+}
+function flushQueue(){
+  if(flushing || !myName()) return Promise.resolve();
+  var keys=Object.keys(QUEUE); if(!keys.length) return Promise.resolve();
+  flushing=true;
+  var pk=keys[0], p=QUEUE[pk], progressed=true;
+  return postChain(LG_POST(),0,{action:"pick",code:LEAGUE_CODE,pid:PID,gameId:pk,date:p.d,a:p.a,h:p.h,an:p.an,hn:p.hn})
+    .then(function(b){ delete QUEUE[pk]; saveQueue(); applyBoard(b); })
+    .catch(function(e){
+      if(e&&e.status===409){                  // server refused: game already kicked off
+        delete QUEUE[pk]; saveQueue();
+        REJECTED[pk]=(e.body&&e.body.message)||"Locked before this pick was saved."; saveRejected();
+        toast("⛔ "+REJECTED[pk]); refreshVisibleCards();
+      } else if(e&&e.status===403){           // not joined yet
+        delete QUEUE[pk]; saveQueue(); toast("Join the league first");
+      } else if(e&&e.status&&e.status<500){ delete QUEUE[pk]; saveQueue(); }
+      else { progressed=false; setSync(false); }   // network/server hiccup: keep it queued, retry on the next tick
+      if(e&&e.status&&e.status>=500) progressed=false;
+    })
+    .then(function(){ flushing=false; if(progressed && Object.keys(QUEUE).length) return flushQueue(); });
+}
+
+function loadBoard(){
+  syncCodeUI();
+  getChain(LG_GET(),0).then(applyBoard).catch(function(){ setSync(false); if(activeTab==="league") renderBoard(SERVER_BOARD); });
+}
+function setSync(ok){
+  var el=document.getElementById("lgSync"); if(!el) return;
+  el.textContent = ok ? ("✓ verified "+new Date().toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"}))
+                      : "⚠ offline — will sync when reconnected";
+}
+function syncCodeUI(){
+  document.getElementById("lgCode").textContent=LEAGUE_CODE;
+  var cap=document.getElementById("lgCap");
+  var n=SERVER_BOARD?SERVER_BOARD.count:0, max=(SERVER_BOARD&&SERVER_BOARD.capacity)||25;
+  cap.textContent=n+" / "+max+" players"+(SERVER_BOARD&&SERVER_BOARD.full?" · FULL":"");
+  var joined=!!myName();
+  document.getElementById("lgJoin").style.display=joined?"none":"block";
+  document.getElementById("lgMe").classList.toggle("show",joined);
+  if(!joined){ var i=document.getElementById("lgName"); if(!i.value) i.value=lsGet("nfl2026_name",""); }
+  renderRemRow();
+}
+function renderBoard(board){
+  var box=document.getElementById("lgBoard"), head=document.getElementById("lgBoardHead");
+  syncCodeUI();
+  var members=(board&&board.members)||[];
+  head.style.display=members.length?"flex":"none";
+  document.getElementById("lgFoot").style.display=members.length?"block":"none";
+  if(myName()){
+    var idx=-1; members.forEach(function(m,i){ if(m.pid===PID) idx=i; });
+    var pts_=SERVER_ME?SERVER_ME.points:0;
+    var rank=idx>=0?("#"+(idx+1)+" of "+members.length):"joining…";
+    document.getElementById("lgMe").innerHTML=
+      '<span class="rank-badge">'+esc(rank)+'</span>'+
+      '<span>Playing as <b style="color:#fff">'+esc(myName())+'</b> · '+pts_+' pts</span>'+
+      '<button class="edit-name" id="lgEdit">Edit name</button>';
+    document.getElementById("lgEdit").onclick=function(){
+      var v=prompt("Display name on the leaderboard:",myName()); if(v===null) return;
+      v=v.trim().slice(0,24); if(!v) return;
+      var old=myName(); lsSet("nfl2026_name",v); document.getElementById("cardName").value=v;
+      doJoin(v).then(function(ok){ if(!ok){ lsSet("nfl2026_name",old); document.getElementById("cardName").value=old; syncCodeUI(); } });
+    };
+  }
+  if(!members.length){ box.innerHTML='<div class="empty">No one on the board yet.<br><b>Be the first to make a pick.</b></div>'; return; }
+  box.innerHTML=members.map(function(m,i){
+    var you=m.pid===PID, rank=i+1, top=rank<=3?(" top"+rank):"";
+    var pct=m.decided?Math.round(m.correct/m.decided*100)+"% winners":"no results yet";
+    var ex=(m.exact?(" · "+m.exact+" exact"):"")+(m.close?(" · "+m.close+" within 5"):"");
+    return '<div class="lb-row'+(you?" you":"")+top+'" data-pid="'+esc(m.pid)+'" data-name="'+esc(m.name)+'">'+
+      '<div class="lb-rank">'+rank+'</div>'+
+      '<div style="flex:1;min-width:0"><div class="lb-name">'+esc(m.name)+(you?'<span class="you-tag">YOU</span>':'')+'</div>'+
+      '<div class="lb-sub">'+m.predicted+' picks · '+m.decided+' decided · '+esc(pct)+esc(ex)+'</div></div>'+
+      '<div class="lb-pts">'+m.points+'<small>pts</small></div></div>';
+  }).join("");
+  box.querySelectorAll(".lb-row").forEach(function(r){ r.onclick=function(){ openMemberPicks(r.dataset.pid,r.dataset.name); }; });
+}
+function toast(msg){ var t=document.getElementById("toast"); t.textContent=msg; t.className="toast show";
+  clearTimeout(toast._t); toast._t=setTimeout(function(){ t.className="toast"; },1800); }
+
+function doJoin(name){
+  return postChain(LG_POST(),0,{action:"join",code:LEAGUE_CODE,pid:PID,name:name})
+    .then(function(b){ applyBoard(b); flushQueue(); return true; })
+    .catch(function(e){
+      if(e&&e.status===409&&e.body){
+        toast(e.body.error==="league_full"?"League is full ("+(e.body.capacity||25)+")":"Name already taken");
+        if(e.body.error!=="name_taken"){ lsSet("nfl2026_name",""); syncCodeUI(); }
+      } else setSync(false);
+      return false;
+    });
+}
+function joinLeague(){
+  var v=(document.getElementById("lgName").value||"").trim();
+  if(!v){ document.getElementById("lgName").focus(); return; }
+  lsSet("nfl2026_name",v); document.getElementById("cardName").value=v; syncCodeUI();
+  doJoin(v).then(function(ok){ if(ok) toast("You're in! 🏈"); else if(!myName()) syncCodeUI(); });
+}
+document.getElementById("lgJoinBtn").onclick=joinLeague;
+document.getElementById("lgName").addEventListener("keydown",function(e){ if(e.key==="Enter") joinLeague(); });
+document.getElementById("lgCopy").onclick=function(){
+  var msg="Join my "+LEAGUE_NAME+"! Open "+location.href.split("#")[0]+" and enter your name — invite code "+LEAGUE_CODE+".";
+  var done=function(){ toast("Invite copied ✓"); };
+  if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(msg).then(done,done);
+  else done();
+};
+
+/* ================= LOCK REMINDERS ("games lock in 30 min") ================= */
+var LEAD_MIN=30, REM_GAMES=[], remTimer=null;
+
+function notifyOn(){ return lsGet("nfl2026_notify",false) &&
+  ("Notification" in window) && Notification.permission==="granted"; }
+function renderRemRow(){
+  var btn=document.getElementById("remBtn"), txt=document.getElementById("remTxt");
+  if(!btn) return;
+  var supported=("Notification" in window);
+  if(!supported){
+    btn.style.display="none";
+    txt.innerHTML='Reminders unavailable here.<small>Open the site in Safari or Chrome to enable them.</small>';
+    return;
+  }
+  if(notifyOn()){
+    btn.textContent="On ✓"; btn.className="rem-btn on";
+    txt.innerHTML='Lock reminders are <b>on</b>.<small>Alerts '+LEAD_MIN+' min before kickoff, while the app is open or installed.</small>';
+  } else if(Notification.permission==="denied"){
+    btn.textContent="Blocked"; btn.className="rem-btn";
+    txt.innerHTML='Notifications are blocked.<small>Allow them in your browser settings to get lock alerts.</small>';
+  } else {
+    btn.textContent="Turn on"; btn.className="rem-btn";
+    txt.innerHTML='Lock reminders are off.<small>Get a heads-up '+LEAD_MIN+' minutes before kickoff.</small>';
+  }
+}
+document.getElementById("remBtn").onclick=function(){
+  if(!("Notification" in window)) return;
+  if(notifyOn()){ lsSet("nfl2026_notify",false); renderRemRow(); toast("Reminders off"); return; }
+  Notification.requestPermission().then(function(perm){
+    if(perm==="granted"){ lsSet("nfl2026_notify",true); toast("Reminders on ⏰");
+      showNote("🏈 Reminders on","We'll nudge you "+LEAD_MIN+" minutes before games lock."); }
+    else toast("Permission denied");
+    renderRemRow(); scheduleReminders();
+  }).catch(function(){});
+};
+function showNote(title,body){
+  if(!notifyOn()) return;
+  var opts={body:body,tag:"nfl-lock",renotify:true,icon:"icon.png",badge:"icon.png"};
+  if(navigator.serviceWorker&&navigator.serviceWorker.ready){
+    navigator.serviceWorker.ready.then(function(reg){ reg.showNotification(title,opts); })
+      .catch(function(){ try{ new Notification(title,opts); }catch(e){} });
+  } else { try{ new Notification(title,opts); }catch(e){} }
+}
+function loadReminderGames(){
+  var d1=todayYMD();
+  fetchDays([shiftYMD(d1,-1),d1,shiftYMD(d1,1),shiftYMD(d1,2)]).then(function(data){
+    REM_GAMES=normEvents(data).map(function(g){
+      return {pk:g.pk,iso:g.iso,an:teamShort(g.away.id,g.away.name),hn:teamShort(g.home.id,g.home.name)}; });
+    scheduleReminders();
+  }).catch(function(){});
+}
+function unpicked(){ var now=nowMs();
+  return REM_GAMES.filter(function(g){ return parseIso(g.iso)>now && !predOf(g.pk); }); }
+function renderLockBanner(){
+  var el=document.getElementById("lockBanner"), tx=document.getElementById("lockTxt");
+  var soon=nowMs()+LEAD_MIN*60000;
+  var list=unpicked().filter(function(g){ return parseIso(g.iso)<=soon; });
+  if(!list.length){ el.classList.remove("show"); return; }
+  var next=Math.min.apply(null,list.map(function(g){ return parseIso(g.iso); }));
+  var mins=Math.max(0,Math.round((next-nowMs())/60000));
+  tx.innerHTML='<b>'+list.length+' game'+(list.length>1?'s':'')+'</b> lock'+(list.length>1?'':'s')+
+    ' in <b>'+mins+' min</b> — you haven\'t picked '+(list.length>1?'them':'it')+' yet.';
+  el.classList.add("show");
+  document.getElementById("lockGo").onclick=function(){
+    var d=etYMD(new Date(next));
+    document.querySelector('.tab[data-tab="games"]').click();
+    if(d!==curDate) setDate(d);
+  };
+}
+function scheduleReminders(){
+  clearTimeout(remTimer);
+  renderLockBanner();
+  var list=unpicked(); if(!list.length) return;
+  var next=Math.min.apply(null,list.map(function(g){ return parseIso(g.iso); }));
+  var delay=(next-LEAD_MIN*60000)-nowMs();
+  if(delay<0) delay=0;
+  if(delay>6*3600000) delay=6*3600000;     // re-evaluate at least every 6h
+  remTimer=setTimeout(function(){ maybeNotify(); scheduleReminders(); }, delay+800);
+}
+function maybeNotify(){
+  var soon=nowMs()+LEAD_MIN*60000;
+  var list=unpicked().filter(function(g){ return parseIso(g.iso)<=soon; });
+  if(!list.length) return;
+  var stamp=list.map(function(g){ return g.pk; }).sort().join(",");
+  if(lsGet("nfl2026_lastnote","")===stamp) return;   // don't repeat the same batch
+  lsSet("nfl2026_lastnote",stamp);
+  var title=list.length===1?"🏈 1 game locks in "+LEAD_MIN+" min":"🏈 "+list.length+" games lock in "+LEAD_MIN+" min";
+  var body=list.slice(0,3).map(function(g){ return g.an+" @ "+g.hn; }).join(" · ")+
+    (list.length>3?"  +"+(list.length-3)+" more":"");
+  showNote(title,body);
+}
+
+/* ---------- boot ---------- */
+if("serviceWorker" in navigator){ navigator.serviceWorker.register("sw.js").catch(function(){}); }
+loadGames();
+var savedTeam=lsGet("nfl2026_myteam",""); if(savedTeam) loadTeam(savedTeam);
+updateStats(); syncCodeUI(); renderRemRow();
+loadBoard();
+loadReminderGames();
+if(myName()) doJoin(myName());        // re-claim seat + flush any queued picks
+document.getElementById("cardName").addEventListener("input",function(){ syncCodeUI(); });
+window.addEventListener("online",function(){ flushQueue(); refreshActive(); });
+
+setInterval(function(){
+  if(activeTab==="league") loadBoard();
+  else if(activeTab!=="standings") refreshActive();
+  flushQueue();
+}, 60000);
+// lightweight ticker: keeps the countdown honest and fires alerts on time
+setInterval(function(){ renderLockBanner(); maybeNotify(); }, 30000);
+setInterval(loadReminderGames, 15*60000);
+</script>
+</body>
+</html>

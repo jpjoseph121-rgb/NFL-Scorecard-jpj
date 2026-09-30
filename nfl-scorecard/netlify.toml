@@ -1,0 +1,13 @@
+# The scorecard's two serverless functions (scores + league) live in
+# netlify/functions and route themselves via their own `config.path`
+# (/api/nfl and /api/league), so no redirects are needed here.
+# No API keys or environment variables are required.
+[build]
+  functions = "netlify/functions"
+  publish = "."
+
+# The service worker must never be cached by the CDN, or updates won't roll out.
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache"
